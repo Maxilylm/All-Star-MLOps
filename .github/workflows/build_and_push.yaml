@@ -1,19 +1,28 @@
-on: workflow_dispatch
-  ## YOUR CODE HERE: modify the above line (and possibly other places) to execute this action only on merged PR to main branch
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      ## YOUR CODE HERE: create step to execute same tests as test.yaml before building.
-      - name: build and push
-        ## YOUR CODE HERE: execute this step only if previous step passes
-        env:
-          ## YOUR CODE HERE: Import AWS Credentials as env variables
-        run: |
-        ## YOUR CODE HERE: Build image from present Dockerfile. Tag with current commit_id
-        aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 376129872445.dkr.ecr.us-east-2.amazonaws.com
-        ## YOUR CODE HERE: Push image
 
-          
+      - name: Run tests inside Docker container
+        run: |
+          docker build -t my-image:${{ github.sha }} .
+          docker run --rm -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} my-image:${{ github.sha }}
+        continue-on-error: false
+
+      - name: Build and push Docker image
+        if: success()  # Only run this step if previous tests pass
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 376129872445.dkr.ecr.us-east-2.amazonaws.com
+          docker tag my-image:${{ github.sha }} 376129872445.dkr.ecr.us-east-2.amazonaws.com/my-image:${{ github.sha }}
+          docker push 376129872445.dkr.ecr.us-east-2.amazonaws.com/my-image:${{ github.sha }}
