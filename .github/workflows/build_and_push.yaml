@@ -14,7 +14,9 @@ jobs:
       - name: Run tests inside Docker container
         run: |
           docker build -t my-image:${{ github.sha }} .
+
           docker run --rm -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} -e AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }} my-image:${{ github.sha }}
+
         continue-on-error: false
 
       - name: Build and push Docker image
