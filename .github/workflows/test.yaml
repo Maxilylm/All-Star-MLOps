@@ -1,0 +1,14 @@
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: unit tests
+        env:
+          ## YOUR CODE HERE: Import AWS Credentials as env variables
+        run: |
+          pip install pytest
+          python -m pytest
+          
