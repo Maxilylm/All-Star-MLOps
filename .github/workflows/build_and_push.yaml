@@ -33,6 +33,7 @@ jobs:
           mv my-image.tar artifacts/my-image-${{ github.sha }}.tar
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git
           git add artifacts/my-image-${{ github.sha }}.tar
           git commit -m "Add Docker image tarball"
           git push origin main
