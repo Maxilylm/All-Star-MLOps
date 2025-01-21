@@ -19,7 +19,7 @@ jobs:
 
       - name: Merge pull request
         if: success()  
-        uses: peter-evans/merge-pull-request@v2
+        uses: Maxilylm/merge-pull-request@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           merge-method: squash  
