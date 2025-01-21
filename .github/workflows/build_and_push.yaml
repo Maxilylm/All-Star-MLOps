@@ -16,25 +16,15 @@ jobs:
           docker run --rm -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}  -e AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }} my-image:${{ github.sha }}
         continue-on-error: false
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Docker image
+      - name: Build and push Docker image
+        if: success()  # Only run this step if previous tests pass
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: |
-          docker build -t my-image:${{ github.sha }} .
+          aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 376129872445.dkr.ecr.us-west-1.amazonaws.com
+          docker tag my-image:${{ github.sha }} 376129872445.dkr.ecr.us-west-1.amazonaws.com/mlorenzolosada:${{ github.sha }}
+          docker push 376129872445.dkr.ecr.us-west-1.amazonaws.com/mlorenzolosada:${{ github.sha }}
 
-      - name: Save Docker image to tar file
-        run: |
-          docker save my-image:${{ github.sha }} -o my-image.tar
-
-      - name: Upload image tar file to repository
-        run: |
-          mkdir -p artifacts
-          mv my-image.tar artifacts/my-image-${{ github.sha }}.tar
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git
-          git add artifacts/my-image-${{ github.sha }}.tar
-          git commit -m "Add Docker image tarball"
-          git push origin main
 
